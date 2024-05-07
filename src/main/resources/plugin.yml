@@ -1,0 +1,7 @@
+name: Sandman
+version: '${project.version}'
+main: ashuneko.sandman.Sandman
+api-version: 1.19
+commands:
+  sandman:
+    description: sand lol
