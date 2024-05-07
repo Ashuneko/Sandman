@@ -1,14 +1,16 @@
 package ashuneko.sandman;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
+import me.gamercoder215.mobchip.EntityBrain;
+import me.gamercoder215.mobchip.ai.EntityAI;
+import me.gamercoder215.mobchip.ai.goal.Pathfinder;
+import me.gamercoder215.mobchip.ai.goal.PathfinderAvoidEntity;
+import me.gamercoder215.mobchip.ai.goal.PathfinderFollowMob;
+import me.gamercoder215.mobchip.bukkit.BukkitBrain;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.FallingBlock;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -38,9 +40,10 @@ public final class Sandman extends JavaPlugin implements Listener {
 // Code to be executed every tick
                 for (Player pl : Bukkit.getServer().getOnlinePlayers()) {
                     for (Entity e : pl.getNearbyEntities(0.1, 0.1, 0.1)) {
-                        if (((e instanceof FallingBlock &&  ((FallingBlock) e).getBlockData().getMaterial() == Material.SAND))) {
-                            if (pl.hasMetadata("sandman")){
-                            e.remove(); }
+                        if (((e instanceof FallingBlock && ((FallingBlock) e).getBlockData().getMaterial() == Material.SAND))) {
+                            if (pl.hasMetadata("sandman")) {
+                                e.remove();
+                            }
 
                         }
                     }
@@ -123,7 +126,7 @@ public final class Sandman extends JavaPlugin implements Listener {
             im.setLore(lore);
             i.setItemMeta(im);
             p.getInventory().addItem(i);
-            p.setMetadata("sandman",new FixedMetadataValue(this,"ftay"));
+            p.setMetadata("sandman", new FixedMetadataValue(this, "ftay"));
         }
 
 
@@ -141,14 +144,45 @@ public final class Sandman extends JavaPlugin implements Listener {
             e.setCancelled(true);
         }
     }
+
     @EventHandler
     public void spawnHusk(PlayerInteractEvent e) {
         Player p = e.getPlayer();
         if (p.getInventory().getItemInMainHand().getItemMeta().getLore().contains(ChatColor.WHITE + "Right-Click " + ChatColor.GOLD + "» " + ChatColor.GRAY + "Sandman")) {
-            if (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {
-
-
+            if (e.getAction() == Action.LEFT_CLICK_BLOCK || e.getAction() == Action.LEFT_CLICK_AIR) {
+                Entity husk = p.getWorld().spawnEntity(p.getLocation(),EntityType.HUSK);
+                addGoal((Mob) husk, p);
             }
         }
+    }
+
+    public void addGoal(Mob m, Player p) {
+        EntityBrain brain = BukkitBrain.getBrain(m);
+
+        // GoalSelector AI
+        EntityAI goal = brain.getGoalAI();
+
+        // TargetSelector AI
+        EntityAI target = brain.getTargetAI();
+
+        PathfinderFollowMob dad = new PathfinderFollowMob((Mob) p);
+
+        target.put(dad, 0);
+    }
+
+    public static void setRestriction(Mob m, Player p) {
+        EntityBrain brain = BukkitBrain.getBrain(m);
+
+        // Sets the restriction area with a radius of 5, making the total area roughly 25π in area
+        Location centre = p.getLocation();
+        brain.setRestrictionArea(centre, 7);
+        if (brain.hasRestriction()) {
+            System.out.println("it worky rn");
+        }
+    }
+    public static void clearRestriction (Mob m){
+        EntityBrain brain = BukkitBrain.getBrain(m);
+        // Clears all current restriction metadata
+        brain.clearRestrictionArea();
     }
 }
